@@ -14,5 +14,6 @@ int main() {
 
 
     tensor.printTensor("ciao");
+    tensor.printTensor("ciao");
     return 0;
 }
