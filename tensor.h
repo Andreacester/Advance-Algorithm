@@ -102,12 +102,13 @@ public:
         }
         std::shared_ptr<std::vector<T>> n_array = std::make_shared<std::vector<T>>(n_elem);
         Tensor<T,R> copy_t_(n_array, dimensions_, n_strides_, 0, dimensions_[0]*strides_[0]);
-        auto j = copy_t_.begin();
+        const auto j = copy_t_.start_ptr_;
         //da controllare e rifare senza iterator
-        for(auto i = std::begin(this); i < std::end(this); ++i){
-            copy_t_.setWithArray(*i, j.currentPosition(), R);
+        /*//copy da pensare
+        for(auto i = copy_t_.start_ptr_; i < copy_t_.end_ptr_; ++i){
+            copy_t_.setArray(i, j, R);
             ++j;
-        }
+        }*/
         return copy_t_;
     }
 
@@ -181,6 +182,83 @@ public:
     }
 };
 
+//tensor con rate 0
+template <class T>
+class Tensor <T,0>{
+private:
+
+    std::shared_ptr<std::vector<T>> array_;
+    int start_ptr_;
+    int end_ptr_;
+
+    friend class Tensor<T,1>;
+    template <class T1, int ... D>
+
+    Tensor(const std::shared_ptr<std::vector<T>> array, const int start_ptr):
+    array_(array),
+    start_ptr_(start_ptr){}
+
+    //il costruttore
+    Tensor(
+            const std::shared_ptr<std::vector<T>>& array,
+            int dimensions[],
+            int strides[],
+            const int start_ptr,
+            const int end_ptr
+    ): array_ (array),
+       start_ptr_(start_ptr) {}
+
+
+public:
+
+    //rank 0
+    Tensor(){
+        array_ = std::make_shared<std::vector<T>>(1);
+    }
+
+    //1 element
+    Tensor(const T elem):Tensor(){
+        array_->at(0)=elem;
+    }
+
+    //sharing
+    Tensor(const Tensor& tensor)=default;
+
+    //move
+    Tensor(Tensor&& tensor)=default;
+
+    //destructor
+    ~Tensor() = default;
+
+    //sharing
+    Tensor& operator=(const Tensor& tensor)=default;
+
+    //move
+    Tensor& operator=(Tensor&& tensor)=default;
+
+    //assignement???
+    Tensor& operator=(const T value){
+        array_->at(start_ptr_)=value;
+        return this;
+    }
+
+    Tensor<T> copy(){
+        Tensor <T,0> n_tensor_;
+        n_tensor_.set(this->get());
+    }
+
+    inline T get() const{
+        //controlli
+        return array_->at(start_ptr_);
+    }
+
+    inline void set(const T value){
+        if(array_ == nullptr){
+            throw std::out_of_range("error 1");
+        }
+        array_->at(start_ptr_)=value;
+    }
+};
 
 
 

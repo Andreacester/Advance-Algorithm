@@ -13,7 +13,6 @@ int main() {
         }
 
 
-    tensor.printTensor("ciao");
-    tensor.printTensor("ciao");
+    //Tensor<int,2>  tensor2= tensor.copy();
     return 0;
 }
