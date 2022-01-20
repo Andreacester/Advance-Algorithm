@@ -11,6 +11,8 @@
  * fixed dimension of tensor.
  * @tparam L type of the label
  */
+template<typename L>
+class label;
 
 template<typename L>
 class label {
