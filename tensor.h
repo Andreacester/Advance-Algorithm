@@ -21,13 +21,15 @@ private:
 
     friend class Tensor<T, R+1>;
 
-    /*
-     * eccezioni index
-     *
+    /**
      * calculatePosition
-     * */
+     * @param tupla
+     * @param dim dimension
+     * @return position return the calculate position in the tensor
+     */
 
     inline int calculatePosition(const int tupla[], const int dim){
+        if(dim<=0)  throw std::out_of_range;
         int position=start_ptr_;
         for (int i = 0; i < dim; ++i) {
             position+=strides_[i]*tupla[i];
@@ -35,7 +37,15 @@ private:
         return position;
     }
 
-    //il costruttore
+    /**
+     * private constructur
+     * inizialize the Tensor with the parameter given in input
+     * @param array shared array containg the tensor
+     * @param dimensions dimension of the tensor
+     * @param strides strides of the tensor
+     * @param start_ptr starting pointer
+     * @param end_ptr end pointer
+     */
     Tensor(
             const std::shared_ptr<std::vector<T>>& array,
             int dimensions[],
@@ -53,9 +63,17 @@ private:
         }
     }
 public:
-    //default contsructor
+    /**
+     * default constructor
+     * call the other constructor to build the Tensor
+     */
     Tensor() : Tensor(std::vector<int>(R,1)){}
 
+    /**
+     *
+     * @tparam Ints
+     * @param DIM
+     */
     template<typename ...Ints>
     Tensor(Ints... DIM) : Tensor(std::vector<int>({DIM...})){}
 
