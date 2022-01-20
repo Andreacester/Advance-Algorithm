@@ -9,6 +9,11 @@
 template <class T, int D>
 class Tensor;
 
+/**
+ * Tensor with Rank specified
+ * @tparam T
+ * @tparam R
+ */
 template <class T, int R=0>
 class Tensor {
 private:
@@ -29,7 +34,7 @@ private:
      */
 
     inline int calculatePosition(const int tupla[], const int dim){
-        if(dim<=0)  throw std::out_of_range;
+        if(dim<=0)  throw std::out_of_range("Out of range");
         int position=start_ptr_;
         for (int i = 0; i < dim; ++i) {
             position+=strides_[i]*tupla[i];
@@ -64,19 +69,23 @@ private:
     }
 public:
     /**
-     * default constructor
+     * default and public constructor
      * call the other constructor to build the Tensor
      */
     Tensor() : Tensor(std::vector<int>(R,1)){}
 
     /**
      *
-     * @tparam Ints
-     * @param DIM
+     * @tparam Ints parameter need to be int and we don't specify the number
+     * @param DIM dimension
      */
     template<typename ...Ints>
     Tensor(Ints... DIM) : Tensor(std::vector<int>({DIM...})){}
 
+    /**
+     *
+     * @param dimensions dimensions of the tensor we wanr to create
+     */
     Tensor(const std::vector<int>& dimensions){
         if(dimensions.size()!=R){
             throw std::invalid_argument("Number of dimensions different from "+ std::to_string(R));
@@ -100,7 +109,9 @@ public:
     //move
     Tensor(Tensor&& tensor)=default;
 
-    //destructor
+    /**
+     * default destructor for the Tensor
+     */
     ~Tensor() = default;
 
     //sharing
@@ -130,7 +141,12 @@ public:
         return copy_t_;
     }
 
-    //get element
+    /**
+     * get an element from the tensor
+     * @tparam Ints
+     * @param INDEXES
+     * @return return the element calling the getInArray function
+     */
     template<typename ...Ints>
     inline T get(Ints... INDEXES) const{
         int indexes[] = {INDEXES...};
@@ -139,18 +155,34 @@ public:
 
     //get element x 2
     //check existence
+    /**
+     *
+     * @param indexes
+     * @param dim
+     * @return element of the array calculating the position
+     */
     inline T getInArray(const int indexes[],const int dim) {
         return array_->at(calculatePosition(indexes,dim));
     }
 
-    //set
+    /**
+     * set an element of the Tensor calling the setArray function
+     * @tparam Ints
+     * @param value
+     * @param INDEXES
+     */
     template<typename ...Ints>
     inline void set(const T& value, Ints... INDEXES){
         int index[]={INDEXES...};
         setArray(value, index,(int)sizeof...(INDEXES));
     }
 
-    //set
+    /**
+     * set the element on the array with the value
+     * @param value
+     * @param indexes
+     * @param dim
+     */
     inline void setArray(const T& value, const int indexes[], const int dim){
         //errori
         array_->at(calculatePosition(indexes,dim))=value;
@@ -158,7 +190,12 @@ public:
     }
 
 
-    //slicing
+    /**
+     * produce a lower rank Tensor with the same data as before
+     * @param index
+     * @param val
+     * @return the tensor with a Rank-1
+     */
     inline Tensor<T, R-1> slicing(const int index, const int val){
         //try catch
 
@@ -185,6 +222,11 @@ public:
     Tensor<T,R-1> operator[](const int val) {
         return slicing(0,val);
     }
+
+    /**
+     * function used to debug tensor
+     * @param name
+     */
     void printTensor(const std::string name){
         if(array_ == nullptr){
             std::cout << "Empty Tensor Variable!!!" << std::endl;
@@ -200,7 +242,10 @@ public:
     }
 };
 
-//tensor con rate 0
+/**
+ * tensor con Rank 0
+ * @tparam T
+ */
 template <class T>
 class Tensor <T,0>{
 private:
@@ -211,7 +256,13 @@ private:
 
     friend class Tensor<T,1>;
     template <class T1, int ... D>
-
+    /**
+     * private constructor
+     * @tparam T1 Tensor
+     * @tparam D dimensions
+     * @param array Aarray of Tensor
+     * @param start_ptr start pointer
+     */
     Tensor(const std::shared_ptr<std::vector<T>> array, const int start_ptr):
     array_(array),
     start_ptr_(start_ptr){}
@@ -229,7 +280,10 @@ private:
 
 public:
 
-    //rank 0
+    /**
+     * public constructor with rank 0
+     * the tensor will be crate shared
+     */
     Tensor(){
         array_ = std::make_shared<std::vector<T>>(1);
     }
