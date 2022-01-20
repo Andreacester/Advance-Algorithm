@@ -17,18 +17,6 @@ class label;
 template<typename L>
 class label {
 
-private:
-
-    /**
-     * Private constructor.
-     * @param n label's name
-     * @param d associated dimension size
-     * @param p occurrences vector of the label
-     */
-    label(L n, size_t d, std::vector<size_t> p) : name(n), size(d), positions(p) {
-        assert(d > static_cast<size_t>(0));
-    }
-
 public:
 
     L name;
@@ -86,6 +74,20 @@ public:
         }
         return dimensions;
     }
+
+private:
+
+    /**
+     * Private constructor.
+     * @param n label's name
+     * @param d associated dimension size
+     * @param p occurrences vector of the label
+     */
+    label(L n, size_t d, std::vector<size_t> p) : name(n), size(d), positions(p) {
+        assert(d > static_cast<size_t>(0));
+    }
+
+
 };
 
 

@@ -16,57 +16,7 @@ class Tensor;
  */
 template <class T, int R=0>
 class Tensor {
-private:
-    int dimensions_[R];
-    int strides_[R];
-    //dubbio
-    std::shared_ptr<std::vector<T>> array_;
-    int start_ptr_;
-    int end_ptr_;
 
-    friend class Tensor<T, R+1>;
-
-    /**
-     * calculatePosition
-     * @param tupla
-     * @param dim dimension
-     * @return position return the calculate position in the tensor
-     */
-
-    inline int calculatePosition(const int tupla[], const int dim){
-        if(dim<=0)  throw std::out_of_range("Out of range");
-        int position=start_ptr_;
-        for (int i = 0; i < dim; ++i) {
-            position+=strides_[i]*tupla[i];
-        }
-        return position;
-    }
-
-    /**
-     * private constructur
-     * inizialize the Tensor with the parameter given in input
-     * @param array shared array containg the tensor
-     * @param dimensions dimension of the tensor
-     * @param strides strides of the tensor
-     * @param start_ptr starting pointer
-     * @param end_ptr end pointer
-     */
-    Tensor(
-            const std::shared_ptr<std::vector<T>>& array,
-            int dimensions[],
-            int strides[],
-            const int start_ptr,
-            const int end_ptr
-            ): array_ (array),
-            start_ptr_(start_ptr),
-            end_ptr_(end_ptr)
-
-    {
-        for (int i=0; i < R; ++i){
-            dimensions_[i]=dimensions[i];
-            strides_[i]=strides[i];
-        }
-    }
 public:
     /**
      * default and public constructor
@@ -240,6 +190,59 @@ public:
         }
         std::cout << std::endl;
     }
+
+private:
+    int dimensions_[R];
+    int strides_[R];
+    //dubbio
+    std::shared_ptr<std::vector<T>> array_;
+    int start_ptr_;
+    int end_ptr_;
+
+    friend class Tensor<T, R+1>;
+
+    /**
+     * calculatePosition
+     * @param tupla
+     * @param dim dimension
+     * @return position return the calculate position in the tensor
+     */
+
+    inline int calculatePosition(const int tupla[], const int dim){
+        if(dim<=0)  throw std::out_of_range("Out of range");
+        int position=start_ptr_;
+        for (int i = 0; i < dim; ++i) {
+            position+=strides_[i]*tupla[i];
+        }
+        return position;
+    }
+
+    /**
+     * private constructur
+     * inizialize the Tensor with the parameter given in input
+     * @param array shared array containg the tensor
+     * @param dimensions dimension of the tensor
+     * @param strides strides of the tensor
+     * @param start_ptr starting pointer
+     * @param end_ptr end pointer
+     */
+    Tensor(
+            const std::shared_ptr<std::vector<T>>& array,
+            int dimensions[],
+            int strides[],
+            const int start_ptr,
+            const int end_ptr
+            ): array_ (array),
+            start_ptr_(start_ptr),
+            end_ptr_(end_ptr)
+
+    {
+        for (int i=0; i < R; ++i){
+            dimensions_[i]=dimensions[i];
+            strides_[i]=strides[i];
+        }
+    }
+
 };
 
 /**
@@ -248,36 +251,6 @@ public:
  */
 template <class T>
 class Tensor <T,0>{
-private:
-
-    std::shared_ptr<std::vector<T>> array_;
-    int start_ptr_;
-    int end_ptr_;
-
-    friend class Tensor<T,1>;
-    template <class T1, int ... D>
-    /**
-     * private constructor
-     * @tparam T1 Tensor
-     * @tparam D dimensions
-     * @param array Aarray of Tensor
-     * @param start_ptr start pointer
-     */
-    Tensor(const std::shared_ptr<std::vector<T>> array, const int start_ptr):
-    array_(array),
-    start_ptr_(start_ptr){}
-
-    //il costruttore
-    Tensor(
-            const std::shared_ptr<std::vector<T>>& array,
-            int dimensions[],
-            int strides[],
-            const int start_ptr,
-            const int end_ptr
-    ): array_ (array),
-       start_ptr_(start_ptr) {}
-
-
 public:
 
     /**
@@ -330,6 +303,38 @@ public:
         }
         array_->at(start_ptr_)=value;
     }
+
+private:
+
+    std::shared_ptr<std::vector<T>> array_;
+    int start_ptr_;
+    int end_ptr_;
+
+    friend class Tensor<T,1>;
+    template <class T1, int ... D>
+    /**
+     * private constructor
+     * @tparam T1 Tensor
+     * @tparam D dimensions
+     * @param array Aarray of Tensor
+     * @param start_ptr start pointer
+     */
+    Tensor(const std::shared_ptr<std::vector<T>> array, const int start_ptr):
+    array_(array),
+    start_ptr_(start_ptr){}
+
+    //il costruttore
+    Tensor(
+            const std::shared_ptr<std::vector<T>>& array,
+            int dimensions[],
+            int strides[],
+            const int start_ptr,
+            const int end_ptr
+    ): array_ (array),
+       start_ptr_(start_ptr) {}
+
+
+
 };
 
 
