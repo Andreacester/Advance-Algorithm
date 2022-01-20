@@ -2,7 +2,7 @@
 #include "tensor.h"
 
 int main() {
-    Tensor<int,2>  tensor(10, 10);
+    Tensor::Tensor<int> t1(2, 3);
     int n=0;
     //tensor.set(10,1,1);
 
