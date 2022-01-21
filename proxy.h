@@ -278,7 +278,7 @@ private:
             // There is at least one unique label in the labeled positions list and it isn't from only one tensor
             std::vector<size_t> unique_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T, L>::unique_labels));
             std::vector<size_t> common_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T, L>::common_labels));
-            tensor::tensor<T> computed_tensor(unique_labels_size);
+            Tensor::Tensor<T> computed_tensor(unique_labels_size);
             --pointer[0];
             int current_dim;
             while (!proxy_tensor<T, L>::last_visitable_point(&pointer, &unique_labels_size)) {
@@ -311,36 +311,36 @@ private:
     /**
      * function to calculate the trace of a tensor se chiudo i return va a puttane tutto
      */
-    proxy_label_tensor<T,L> trace{
+    proxy_label_tensor<T,L> trace(){
         if(proxy_op_tensor<T,L>::position_list.size()>1)
-            return compute_trace(&(proxy_op_tensor<T,L>::common_labels))
+            return compute_trace(&(proxy_op_tensor<T,L>::common_labels));
         else
-            return compute_trace(&(proxy_op_tensor<T,L>::unique_labels))
+            return compute_trace(&(proxy_op_tensor<T,L>::unique_labels));
     }
     /**
      * Calculates the trace.
      * @param label_list List of the labels to "merge"
      * @return Proxy labeled tensor of the trace
      */
-    proxy_labeled_tensor<T, L> compute_trace(std::vector<label<L>> *label_list) {
+    proxy_label_tensor<T, L> compute_trace(std::vector<label<L>> *label_list) {
         std::vector<size_t> common_label_pointer(label_list->size());
         std::vector<size_t> common_labels_size = label<L>::get_labels_sizes(label_list);
-        tensor::tensor<T> computed_tensor(1);
+        Tensor::Tensor<T> computed_tensor(1);
         --common_label_pointer[0];
 
         while (!proxy_tensor<T, L>::last_visitable_point(&common_label_pointer, &common_labels_size)) {
             proxy_tensor<T, L>::next_position(&common_label_pointer, &common_labels_size);
             T product = 1;
-            for (proxy_labeled_tensor<T, L> &proxy_tensor_ptr : proxy_op_tensor<T, L>::positions_list) {
+            for (proxy_label_tensor<T, L> &proxy_tensor_ptr : proxy_op_tensor<T, L>::positions_list) {
                 product *= proxy_tensor_ptr.data.at(proxy_tensor_ptr.get_position(&common_label_pointer, label_list));
             }
             computed_tensor.at(static_cast<size_t>(0)) += product;
         }
-        K new_label = ++(*std::max_element(label_list->begin(), label_list->end())).name;
-        return proxy_labeled_tensor<T, L>(computed_tensor, {new_label});
+        L new_label = ++(*std::max(label_list->begin(), label_list->end())).name;
+        return proxy_label_tensor<T, L>(computed_tensor, {new_label});
     }
 
-    operator proxy_labeled_tensor<T, L> () override {
+    operator proxy_label_tensor<T, L> () override {
         return eval();
     }
 };
