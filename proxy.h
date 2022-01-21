@@ -199,6 +199,7 @@ public:
     operator Tensor::Tensor<T>(){
         return static_cast<Tensor::Tensor<T>>(static_cast<proxy_label_tensor<T, L>>(*this));
     }
+    virtual operator proxy_label_tensor<T,L>() = 0;
 private:
     std::vector<label<L>> unique_labels;
     std::vector<label<L>> common_labels;
@@ -218,11 +219,11 @@ private:
      void divide_labels(){
          typename std::vector<proxy_label_tensor<T,L>>::iterator current, succ, dead = position_list.end();
         for (current = position_list.begin(); current < dead ; ++current) {
-            fopen(label<L> &l: current->position_list){
+            for(label<L> &l: current->position_list){
                 if(l.find_label(&common_labels) == std::numeric_limits<size_t>::max()){
                     proxy_tensor<T, L>::position_list.pusg_back(l);
                     for (succ = current; succ < dead; ++succ) {
-                        if(l.find_label(&succ->porxy_tensor<T,L>::postion_list) != std::numeirc_limits<size_t>::max()){
+                        if(l.find_label(&succ->proxy_tensor<T,L>::postion_list) != std::numeric_limits<size_t>::max()){
                             common_labels.push_back(l);
                             break;
                         }
@@ -240,20 +241,15 @@ private:
         * @return true id the label is in all the label positions, otherwise false
         */
     bool is_label_all_in(label<L> *l){
-        for (proxy_labeled_tensor<T, L> &proxy_tensor : position_list) {
+        for (proxy_label_tensor<T, L> &proxy_tensor : position_list) {
             if(l->find_label(&proxy_tensor.position_list) == std::numeric_limits<size_t>::max())
                 return false;
         }
         return true;
     }
 
-    virtual proxy_labeled_tensor<T, L> eval(){};
+    virtual proxy_label_tensor<T, L> eval(){};
 
-public:
-    operator Tensor::Tensor<T> (){
-        return static_cast<Tensor::Tensor<T>>(static_cast<proxy_label_tensor<T,L>>(*this));
-    }
-    virtual operator proxy_label_tensor<T,L>() = 0;
 };
 
 #endif //PROGETTOTORSELLO_PROXY_H
