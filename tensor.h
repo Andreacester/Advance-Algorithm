@@ -16,7 +16,7 @@ namespace Tensor {
  * @tparam R
  */
     template<class T, int R = 0>
-    class Tensor{
+    class Tensor {
 
     public:
         /**
@@ -35,7 +35,7 @@ namespace Tensor {
 
         /**
          *
-         * @param dimensions dimensions of the tensor we want to create
+         * @param dimensions dimensions of the tensor we wanr to create
          */
         Tensor(const std::vector<int> &dimensions) {
             if (dimensions.size() != R) {
