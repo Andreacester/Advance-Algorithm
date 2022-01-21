@@ -200,9 +200,60 @@ public:
         return static_cast<Tensor::Tensor<T>>(static_cast<proxy_label_tensor<T, L>>(*this));
     }
 private:
+    std::vector<label<L>> unique_labels;
+    std::vector<label<L>> common_labels;
+    std::vector<proxy_label_tensor<T,L>> position_list;
 
+    proxy_op_tensor(proxy_label_tensor<T,L> st, proxy_label_tensor<T,L> nd) {
+        position_list.push_back(st);
+        position_list.push_back(nd);
+    }
 
+    proxy_op_tensor() {}
 
+    /**
+     * *
+     * Separating common labels form unique labels
+     */
+     void divide_labels(){
+         typename std::vector<proxy_label_tensor<T,L>>::iterator current, succ, dead = position_list.end();
+        for (current = position_list.begin(); current < dead ; ++current) {
+            fopen(label<L> &l: current->position_list){
+                if(l.find_label(&common_labels) == std::numeric_limits<size_t>::max()){
+                    proxy_tensor<T, L>::position_list.pusg_back(l);
+                    for (succ = current; succ < dead; ++succ) {
+                        if(l.find_label(&succ->porxy_tensor<T,L>::postion_list) != std::numeirc_limits<size_t>::max()){
+                            common_labels.push_back(l);
+                            break;
+                        }
+                    }
+                    if(succ == dead){
+                        unique_labels.push_back(l);
+                    }
+                }
+            }
+        }
+     }
+    /**
+        * check if a label is in every item of the labeles position list
+        * @param l Label to search
+        * @return true id the label is in all the label positions, otherwise false
+        */
+    bool is_label_all_in(label<L> *l){
+        for (proxy_labeled_tensor<T, L> &proxy_tensor : position_list) {
+            if(l->find_label(&proxy_tensor.position_list) == std::numeric_limits<size_t>::max())
+                return false;
+        }
+        return true;
+    }
+
+    virtual proxy_labeled_tensor<T, L> eval(){};
+
+public:
+    operator Tensor::Tensor<T> (){
+        return static_cast<Tensor::Tensor<T>>(static_cast<proxy_label_tensor<T,L>>(*this));
+    }
+    virtual operator proxy_label_tensor<T,L>() = 0;
 };
 
 #endif //PROGETTOTORSELLO_PROXY_H
