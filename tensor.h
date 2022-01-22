@@ -193,6 +193,8 @@ namespace Tensor {
             std::cout << std::endl;
         }
 
+        constexpr size_t get_rank() const { return R; }
+
     private:
         int dimensions_[R];
         int strides_[R];
@@ -332,6 +334,7 @@ namespace Tensor {
             }
             array_->at(start_ptr_) = value;
         }
+        constexpr size_t get_rank() const { return 0; }
 
     private:
 

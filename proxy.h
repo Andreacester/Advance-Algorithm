@@ -21,6 +21,9 @@
 template<typename T, typename L>
 class proxy_tensor;
 
+template<typename T, typename K>
+class proxy_op_tensor;
+
 /**
  * declaration for the Product class
  * @tparam T
@@ -52,9 +55,10 @@ class proxy_label_tensor;
  */
 template<typename T, typename L>
 class proxy_tensor{
-    friend class proxy_tensor<T, L>;
+    friend class proxy_op_tensor<T, L>;
     friend class proxy_sum_tensor<T, L>;
     friend class proxy_label_tensor<T, L>;
+    friend class proxy_prod_tensor<T, L>;
 
 public:
     virtual operator proxy_label_tensor<T, L>() = 0;
@@ -108,12 +112,12 @@ private:
 template <typename T, typename L>
 class proxy_label_tensor : public proxy_tensor<T,L>{
     friend class proxy_tensor<T, L>;
+    friend class proxy_op_tensor<T, L>;
     friend class proxy_sum_tensor<T, L>;
-    friend class proxy_label_tensor<T, L>;
 
 public:
     proxy_label_tensor(Tensor::Tensor<T> info, std::initializer_list<L> names) : data(info), proxy_tensor<T, L>::proxy_tensor(labels_from_names(info, names)) {
-        if(info.get_rank() == names.size()) throw std::exception();
+        assert(info.get_rank() == names.size());
     }
 
     proxy_sum_tensor<T, L> operator+(const proxy_sum_tensor<T, L> &other) {
@@ -233,9 +237,9 @@ private:
 };
 
 template <typename T, typename L>
-class proxy_op_tensor: public proxy_tensor<T,L>{
+class proxy_op_tensor: public proxy_tensor<T,L> {
     friend class proxy_tensor<T, L>;
-    friend class proxy_op_tensor<T, L>;
+    friend class proxy_prod_tensor<T, L>;
     friend class proxy_sum_tensor<T, L>;
     friend class proxy_label_tensor<T, L>;
 
@@ -390,7 +394,7 @@ template<typename T, typename L>
 class proxy_sum_tensor : public proxy_op_tensor<T, L>{
     friend class proxy_tensor<T, L>;
     friend class proxy_op_tensor<T, L>;
-    friend class proxy_sum_tensor<T, L>;
+    friend class proxy_prod_tensor<T, L>;
     friend class proxy_label_tensor<T, L>;
 
 public:
