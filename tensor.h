@@ -266,46 +266,78 @@ namespace Tensor {
             array_->at(0) = elem;
         }
 
-        //sharing
+        /**
+         * used for sharing a Tensor
+         * @param tensor
+         */
         Tensor(const Tensor &tensor) = default;
 
-        //move
+        /**
+         * move a tensor
+         * @param tensor
+         */
         Tensor(Tensor &&tensor) = default;
 
-        //destructor
+        /**
+         * we use the default destructor for the Tensor
+         */
         ~Tensor() = default;
 
-        //sharing
+        /**
+        * used for sharing a Tensor
+        * @param tensor
+        */
         Tensor &operator=(const Tensor &tensor) = default;
 
-        //move
+        /**
+         * move a tensor
+         * @param tensor
+         */
         Tensor &operator=(Tensor &&tensor) = default;
 
-        //assignement???
+        /**
+         *
+         * @param value value to be assigned
+         * @return tensor with value assigned
+         */
         Tensor &operator=(const T value) {
             array_->at(start_ptr_) = value;
             return this;
         }
 
+        /**
+         * copy a Tensor to an another tensor
+         */
         Tensor<T> copy() {
             Tensor<T, 0> n_tensor_;
             n_tensor_.set(this->get());
         }
 
+        /**
+         * get an element from the Tensor
+         * @return the element of the Tensor
+         * to do: control check about the bounds
+         */
         inline T get() const {
-            //controlli
             return array_->at(start_ptr_);
         }
 
+        /**
+         * set an element of the Tensor with a value:
+         * @param value
+         */
         inline void set(const T value) {
             if (array_ == nullptr) {
-                throw std::out_of_range("error 1");
+                throw std::out_of_range("Out of range exception");
             }
             array_->at(start_ptr_) = value;
         }
 
     private:
 
+        /**
+         * used to create an shared Tensor
+         */
         std::shared_ptr<std::vector<T>> array_;
         int start_ptr_;
         int end_ptr_;
@@ -324,7 +356,9 @@ namespace Tensor {
                 array_(array),
                 start_ptr_(start_ptr) {}
 
-        //il costruttore
+        /**
+         * private constructor for the tensor
+         */
         Tensor(
                 const std::shared_ptr<std::vector<T>> &array,
                 int dimensions[],

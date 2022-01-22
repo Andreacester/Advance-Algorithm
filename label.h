@@ -34,6 +34,9 @@ public:
         assert(d > static_cast<size_t>(0));
     }
 
+    /**
+     * redefinition of all operator that we need
+     */
     bool operator<(const label<L> &other) {
         return name < other.name;
     }
@@ -49,7 +52,7 @@ public:
     /**
      * Look for the label in a labels list
      * @param labels vector of labels of the same type
-     * @return first occurrence position in the list if any or the maximum size_t
+     * @return first occurrence position in the list
      */
     size_t find_label(std::vector<label<L>> *labels) {
         size_t position = static_cast<size_t>(0);
@@ -63,7 +66,7 @@ public:
     }
 
     /**
-     * Static function: gets all the labels' sizes from the labels list
+     * Static function: used to get all the label size from the list of labels
      * @param labels labels vector
      * @return size_t vector of label sizes
      */
@@ -86,8 +89,6 @@ private:
     label(L n, size_t d, std::vector<size_t> p) : name(n), size(d), positions(p) {
         assert(d > static_cast<size_t>(0));
     }
-
-
 };
 
 
