@@ -82,13 +82,11 @@ namespace Tensor {
             }
             std::shared_ptr<std::vector<T>> n_array = std::make_shared<std::vector<T>>(n_elem);
             Tensor<T, R> copy_t_(n_array, dimensions_, n_strides_, 0, dimensions_[0] * strides_[0]);
-            const auto j = copy_t_.start_ptr_;
-            //da controllare e rifare senza iterator
-            /*//copy da pensare
+            auto j = copy_t_.start_ptr_;
             for(auto i = copy_t_.start_ptr_; i < copy_t_.end_ptr_; ++i){
                 copy_t_.setArray(i, j, R);
                 ++j;
-            }*/
+            }
             return copy_t_;
         }
 
@@ -198,12 +196,12 @@ namespace Tensor {
     private:
         int dimensions_[R];
         int strides_[R];
-        //dubbio
         std::shared_ptr<std::vector<T>> array_;
         int start_ptr_;
         int end_ptr_;
 
         friend class Tensor<T, R + 1>;
+        template <class T1, int ...D>
 
         /**
          * calculatePosition
@@ -373,6 +371,9 @@ namespace Tensor {
 
 
     };
+
+
+
 }
 
 

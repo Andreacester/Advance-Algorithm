@@ -5,6 +5,7 @@
 #include <iostream>
 #include <tuple>
 #include <memory>
+#include "UTensor.h"
 
 #ifndef PROGETTOTORSELLO_PROXY_H
 #define PROGETTOTORSELLO_PROXY_H
@@ -114,6 +115,7 @@ class proxy_label_tensor : public proxy_tensor<T,L>{
     friend class proxy_tensor<T, L>;
     friend class proxy_op_tensor<T, L>;
     friend class proxy_sum_tensor<T, L>;
+    friend class proxy_prod_tensor<T, L>;
 
 public:
     proxy_label_tensor(Tensor::Tensor<T> info, std::initializer_list<L> names) : data(info), proxy_tensor<T, L>::proxy_tensor(labels_from_names(info, names)) {
