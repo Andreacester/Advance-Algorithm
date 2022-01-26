@@ -99,6 +99,35 @@ public:
         return proxy_sum_tensor<T,D,L>(*this, other);
     }
 
+    proxy_prod_tensor<T,D,L> operator*(const proxy_prod_tensor<T,D,L> &other) {
+        /* return other * *this; */
+        other.positions_list.push_back(*this);
+        return other;
+    }
+
+    proxy_prod_tensor<T,D,L> operator*(const proxy_label_tensor<T,D,L> &other) {
+        return proxy_prod_tensor<T,D,L>(*this, other);
+    }
+
+    operator Tensor::Tensor<T,D> () {
+        bool to_implode = false;
+        auto dead = proxy_tensor<T,D,L>::positions_list.end();
+        for (auto current_label = proxy_tensor<T,D,L>::positions_list.begin(); current_label < dead; ++current_label) {
+            if (current_label->positions.size() > 1)
+                to_implode = true;
+        }
+        if (!to_implode)
+            return t_data;
+        else {
+            // There is a trace to compute
+            return static_cast<Tensor::Tensor<T,D>>(static_cast<proxy_label_tensor<T,D,L>>(proxy_prod_tensor<T,D,L>(*this)));
+        }
+    }
+
+    operator proxy_label_tensor<T,D,L>() {
+        return *this;
+    }
+
 private:
 
     proxy_label_tensor(Tensor::Tensor<T,D> info, std::vector<label<L>> labels) : t_data(info), proxy_tensor<T,D, L>::proxy_tensor(copy_labels(info, labels)) {
@@ -138,9 +167,6 @@ private:
         return result;
     }
 
-    operator proxy_label_tensor<T,D, L>() {
-        return *this;
-    }
 
 
     Tensor::Tensor<T,D> t_data;
@@ -150,6 +176,8 @@ template <typename T,int D, typename L>
 class proxy_op_tensor: public proxy_tensor<T,D,L> {
     friend class proxy_tensor<T,D, L>;
     friend class proxy_label_tensor<T,D, L>;
+    friend class proxy_sum_tensor<T,D, L>;
+    friend class proxy_prod_tensor<T,D, L>;
 
 public:
 
@@ -198,9 +226,85 @@ private:
         }
         return true;
     }
+    virtual proxy_label_tensor<T,D,L> eval() {};
 };
 
+template<typename T, int D, typename L>
+class proxy_prod_tensor : public proxy_op_tensor<T,D,L> {
 
+    friend class proxy_tensor<T,D,L>;
+    friend class proxy_op_tensor<T,D,L>;
+    friend class proxy_sum_tensor<T,D,L>;
+    friend class proxy_label_tensor<T,D,L>;
+
+public:
+    proxy_sum_tensor<T,D,L>operator+(const proxy_label_tensor<T,D,L> &other) {
+        return proxy_sum_tensor<T,D,L>(*this, other);
+    }
+
+    proxy_sum_tensor<T,D,L> operator+(const proxy_prod_tensor<T,D,L> &other) {
+        return proxy_sum_tensor<T,D,L>(*this, other);
+    }
+
+    proxy_prod_tensor<T,D,L> operator*(const proxy_label_tensor<T,D,L> &other) {
+        proxy_op_tensor<T,D,L>::positions_list.push_back(other);
+        return *this;
+    }
+
+    proxy_prod_tensor<T,D,L> operator*(const proxy_prod_tensor<T,D,L> &other) {
+        proxy_op_tensor<T,D,L>::positions_list.insert(
+                proxy_op_tensor<T,D,L>::positions_list.end(),
+                other.proxy_op_tensor<T,D,L>::positions_list.begin(),
+                other.proxy_op_tensor<T,D,L>::positions_list.end());
+        return *this;
+    }
+
+private:
+    proxy_prod_tensor(proxy_label_tensor<T,D,L> st, proxy_label_tensor<T,D,L> nd) : proxy_op_tensor<T,D,L>::proxy_op_tensor(st, nd) {
+    }
+
+    proxy_prod_tensor(proxy_label_tensor<T,D,L> st) : proxy_op_tensor<T,D,L>::proxy_op_tensor() {
+        proxy_op_tensor<T,D,L>::positions_list.push_back(st);
+    }
+
+    proxy_label_tensor<T,D,L> eval() override {
+        proxy_op_tensor<T,D,L>::divide_labels();
+        std::vector<size_t> pointer(proxy_op_tensor<T,D,L>::unique_labels.size());
+
+            // There is at least one unique label in the labeled positions list and it isn't from only one tensor
+            std::vector<size_t> unique_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T,D,L>::unique_labels));
+            std::vector<size_t> common_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T,D,L>::common_labels));
+            Tensor::Tensor<T,D> computed_tensor(unique_labels_size);
+            --pointer[0];
+            int current_dim;
+            while (!proxy_tensor<T,D,L>::last_visitable_point(&pointer, &unique_labels_size)) {
+                // Going trough the final tensor positions
+                proxy_tensor<T,D,L>::next_position(&pointer, &unique_labels_size);
+                std::vector<size_t> common_label_pointer(proxy_op_tensor<T,D,L>::common_labels.size());
+                --common_label_pointer[0];
+
+                while (!proxy_tensor<T,D,L>::last_visitable_point(&common_label_pointer, &common_labels_size)) {
+                    // Going trough the common labels like they were a tensor pointer
+                    proxy_tensor<T,D,L>::next_position(&common_label_pointer, &common_labels_size);
+                    T product = 1;
+                    for (proxy_label_tensor<T,D,L> &proxy_tensor_ptr : proxy_op_tensor<T,D,L>::positions_list) {
+                        // Going trough the proxy_tensor
+                        product *= proxy_tensor_ptr.data.at(proxy_tensor_ptr.get_position(&common_label_pointer,
+                                                                                          &(proxy_op_tensor<T,D,L>::common_labels),
+                                                                                          &pointer,
+                                                                                          &(proxy_op_tensor<T,D,L>::unique_labels)));
+                    }
+                    computed_tensor.at(pointer) += product;
+                }
+            }
+            return proxy_label_tensor<T,D,L>(computed_tensor, proxy_op_tensor<T,D,L>::unique_labels);
+    }
+
+    operator proxy_label_tensor<T,D,L> () override {
+        return eval();
+    }
+
+};
 
 template<typename T, int D, typename L>
 class proxy_sum_tensor : public proxy_op_tensor<T,D,L> {
@@ -208,8 +312,35 @@ class proxy_sum_tensor : public proxy_op_tensor<T,D,L> {
     friend class proxy_tensor<T, D, L>;
     friend class proxy_op_tensor<T, D, L>;
     friend class proxy_label_tensor<T, D, L>;
+    friend class proxy_prod_tensor<T, D, L>;
 
 public:
+    proxy_sum_tensor<T,D,L> operator+(const proxy_label_tensor<T,D,L> &other) {
+        proxy_op_tensor<T,D,L>::positions_list.push_back(other);
+        return *this;
+    }
+
+    proxy_sum_tensor<T,D,L> operator+(const proxy_prod_tensor<T,D,L> &other) {
+        prod_positions_list.push_back(other);
+        return *this;
+    }
+
+    proxy_sum_tensor<T,D,L> operator+(const proxy_sum_tensor<T,D,L> &other) {
+        proxy_op_tensor<T,D,L>::positions_list.insert(
+                proxy_op_tensor<T,D,L>::positions_list.end(),
+                other.proxy_op_tensor<T,D,L>::positions_list.begin(),
+                other.proxy_op_tensor<T,D,L>::positions_list.end());
+
+        prod_positions_list.insert(
+                prod_positions_list.end(),
+                other.prod_positions_list.begin(),
+                other.prod_positions_list.end());
+        return *this;
+    }
+
+    operator proxy_label_tensor<T,D,L> () override {
+        return eval();
+    }
 
 private:
 
