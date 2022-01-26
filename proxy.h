@@ -5,7 +5,6 @@
 #include <iostream>
 #include <tuple>
 #include <memory>
-#include "UTensor.h"
 
 #ifndef PROGETTOTORSELLO_PROXY_H
 #define PROGETTOTORSELLO_PROXY_H
@@ -56,13 +55,13 @@ class proxy_label_tensor;
  */
 template<typename T, int D, typename L>
 class proxy_tensor{
-    friend class proxy_op_tensor<T, D, L>;
+    friend class proxy_op_tensor<T,D,L>;
     friend class proxy_label_tensor<T,D,L>;
+    friend class proxy_prod_tensor<T,D,L>;
+    friend class proxy_sum_tensor<T,D,L>;
 
 public:
     virtual operator proxy_label_tensor<T,D,L>() = 0;
-
-
 
 private:
 
@@ -75,18 +74,46 @@ private:
     proxy_tensor() {
     }
 
+    void next_position(std::vector<size_t> *pointer, std::vector<size_t> *origin) {
+        int current_dim = 0;
+        do {
+            if (++pointer->at(current_dim) == origin->at(current_dim)) {
+                pointer->at(current_dim) = static_cast<size_t>(0);
+                ++current_dim;
+            }
+            else {
+                break;
+            }
+        } while (current_dim < pointer->size());
+    }
 
+    bool last_visitable_point(const std::vector<size_t> *point, const std::vector<size_t> *dimensions) {
+        bool is_last = true;
+        for (size_t i = static_cast<size_t>(0); i < point->size(); ++i) {
+            if (point->at(i) == std::numeric_limits<size_t>::max() || point->at(i) < dimensions->at(i) - 1) {
+                is_last = false;
+                break;
+            }
+        }
+        return is_last;
+    }
 
 };
 
 template <typename T, int D, typename L>
 class proxy_label_tensor : public proxy_tensor<T,D,L>{
-    friend class proxy_tensor<T,D, L>;
+    friend class proxy_tensor<T,D,L>;
     friend class proxy_op_tensor<T,D,L>;
+    friend class proxy_sum_tensor<T,D,L>;
+    friend class proxy_prod_tensor<T,D,L>;
 
 public:
     proxy_label_tensor(Tensor::Tensor<T,D> info, std::initializer_list<L> names) : t_data(info), proxy_tensor<T,D,L>::proxy_tensor(labels_from_names(info, names)) {
         assert(info.get_rank() == names.size());
+    }
+
+    proxy_label_tensor(proxy_label_tensor<T,D,L> const &pr) {
+        *this=pr;
     }
 
     proxy_sum_tensor<T,D,L> operator+(const proxy_sum_tensor<T,D,L> &other) {
@@ -124,13 +151,21 @@ public:
         }
     }
 
+
+    Tensor::Tensor<T,D> getTensor(){
+        return t_data;
+    }
+
     operator proxy_label_tensor<T,D,L>() {
         return *this;
     }
 
+
+
+
 private:
 
-    proxy_label_tensor(Tensor::Tensor<T,D> info, std::vector<label<L>> labels) : t_data(info), proxy_tensor<T,D, L>::proxy_tensor(copy_labels(info, labels)) {
+    proxy_label_tensor(Tensor::Tensor<T,D> info, std::vector<label<L>> labels) : t_data(info), proxy_tensor<T,D,L>::proxy_tensor(copy_labels(info,labels)) {
         assert(info.get_rank() == labels.size());
     }
 
@@ -167,6 +202,27 @@ private:
         return result;
     }
 
+    std::vector<size_t> get_position(std::vector<size_t> *cm_label_pointer, std::vector<label<L>> *cm_labels, std::vector<size_t> *uq_label_pointer = nullptr, std::vector<label<L>> *uq_labels = nullptr) {
+        std::vector<size_t> position(t_data.get_rank());
+        size_t order = static_cast<size_t>(0);
+        for (auto label_item = proxy_tensor<T,D,L>::positions_list.begin(); label_item < proxy_tensor<T,D, L>::positions_list.end(); ++label_item) {
+            size_t index = label_item->find_label(cm_labels);
+            if (index != std::numeric_limits<size_t>::max()) {
+                for (size_t pos = static_cast<size_t>(0); pos < label_item->positions.size(); ++pos)
+                    position[label_item->positions[pos]] = cm_label_pointer->at(index);
+            }
+            else {
+                if (uq_labels == nullptr || uq_label_pointer == nullptr) throw 1;
+                size_t index = label_item->find_label(uq_labels);
+                if (index != std::numeric_limits<size_t>::max()) {
+                    for (size_t pos = static_cast<size_t>(0); pos < label_item->positions.size(); ++pos)
+                        position[label_item->positions[pos]] = uq_label_pointer->at(index);
+                }
+            }
+            ++order;
+        }
+        return position;
+    }
 
 
     Tensor::Tensor<T,D> t_data;
@@ -182,7 +238,7 @@ class proxy_op_tensor: public proxy_tensor<T,D,L> {
 public:
 
     operator Tensor::Tensor<T,D> () {
-        return static_cast<Tensor::Tensor<T,D>>(static_cast<proxy_label_tensor<T,D,L>>(*this));
+        return static_cast<Tensor::Tensor<T,D> >(static_cast<proxy_label_tensor<T,D,L>>(*this));
     }
 
     virtual operator proxy_label_tensor<T,D,L>() = 0;
@@ -238,6 +294,7 @@ class proxy_prod_tensor : public proxy_op_tensor<T,D,L> {
     friend class proxy_label_tensor<T,D,L>;
 
 public:
+
     proxy_sum_tensor<T,D,L>operator+(const proxy_label_tensor<T,D,L> &other) {
         return proxy_sum_tensor<T,D,L>(*this, other);
     }
@@ -274,6 +331,8 @@ private:
             // There is at least one unique label in the labeled positions list and it isn't from only one tensor
             std::vector<size_t> unique_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T,D,L>::unique_labels));
             std::vector<size_t> common_labels_size = label<L>::get_labels_sizes(&(proxy_op_tensor<T,D,L>::common_labels));
+            //Tensor:Tensor<int,2> computed_tensor(2,2);
+
             Tensor::Tensor<T,D> computed_tensor(unique_labels_size);
             --pointer[0];
             int current_dim;
@@ -371,10 +430,11 @@ private:
         std::vector<size_t> pointer(proxy_op_tensor<T,D,L>::common_labels.size());
         --pointer[0];
         Tensor::Tensor<T,D> computed_tensor(labels_size);
+
         while (!proxy_tensor<T,D,L>::last_visitable_point(&pointer, &labels_size)) {
             proxy_tensor<T,D,L>::next_position(&pointer, &labels_size);
             for (proxy_label_tensor<T,D,L> &proxy_tensor_ptr : proxy_op_tensor<T,D,L>::positions_list) {
-                computed_tensor.at(pointer) += proxy_tensor_ptr.data.at(
+                computed_tensor.at(pointer) += proxy_tensor_ptr.t_data.at(
                         proxy_tensor_ptr.get_position(&pointer, &(proxy_op_tensor<T,D,L>::common_labels)));
             }
         }

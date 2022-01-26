@@ -7,6 +7,7 @@ int main() {
 
     Tensor::Tensor<int,2> t1(2,3);
 
+
     Tensor::Tensor<int,2> t23(2, 3);
     Tensor::Tensor<int,2> t32(3, 2);
 
@@ -46,6 +47,14 @@ int main() {
     proxy_label_tensor<int,2, char> sp_t1(t23, {'n', 'm'});
     proxy_label_tensor<int,2, char> sp_t2(t32, {'m', 'p'});
 
-    Tensor::Tensor<int,2> result = sp_t2 * sp_t1;
+
+    //proxy_op_tensor<int,2,char> r(sp_t2 * sp_t1,{'m','m'});
+
+    //Tensor::Tensor<int,2> result = static_cast<Tensor::Tensor<int,2>>(sp_t1);
+    //Tensor::Tensor<int,2> result = (sp_t2 * sp_t1);
+
+    proxy_label_tensor<int,2, char> c(sp_t1+sp_t2);
+
+
     return 0;
 }

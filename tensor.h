@@ -1,14 +1,17 @@
+
+
+#ifndef PROGETTOTORSELLO_TENSOR_H
+#define PROGETTOTORSELLO_TENSOR_H
+
 #include <vector>
 #include <iostream>
 #include <tuple>
 #include <memory>
-
-#ifndef PROGETTOTORSELLO_TENSOR_H
-#define PROGETTOTORSELLO_TENSOR_H
 namespace Tensor {
 
     template<class T, int R>
     class Tensor;
+
 
 /**
  * Tensor with Rank specified
@@ -33,9 +36,10 @@ namespace Tensor {
         template<typename ...Ints>
         Tensor(Ints... DIM) : Tensor(std::vector<int>({DIM...})) {}
 
+
         /**
          *
-         * @param dimensions dimensions of the tensor we wanr to create
+         * @param dimensions dimensions of the tensor we want to create
          */
         Tensor(const std::vector<int> &dimensions) {
             if (dimensions.size() != R) {
@@ -143,6 +147,25 @@ namespace Tensor {
             //std::cout << "elem: " << array_->at(calculatePosition(indexes,dim)) << std::endl;
         }
 
+        T& at(const size_t dimensions[R]) const {
+            T* ptr=start_ptr_;
+            for(size_t i=0; i!=R; ++i) {
+                assert(dimensions[i]<dimensions_[i]);
+                ptr += dimensions[i]*strides_[i];
+            }
+            return *ptr;
+        }
+
+        T& at(const std::vector<size_t>& dimensions) const {
+            assert(dimensions_.size()==R);
+            return at(&dimensions_[0]);
+        }
+
+        template<typename...Dims>
+        T& at(Dims...dimensions) const {
+            static_assert(sizeof...(dimensions)==R, "rank mismatch");
+            return at({static_cast<const size_t>(dimensions)...});
+        }
 
         /**
          * produce a lower rank Tensor with the same data as before
