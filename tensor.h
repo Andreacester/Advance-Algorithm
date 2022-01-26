@@ -7,7 +7,7 @@
 #define PROGETTOTORSELLO_TENSOR_H
 namespace Tensor {
 
-    template<class T, int D>
+    template<class T, int R>
     class Tensor;
 
 /**
@@ -66,13 +66,13 @@ namespace Tensor {
         ~Tensor() = default;
 
         //sharing
-        Tensor &operator=(const Tensor &tensor) = default;
+        Tensor& operator=(const Tensor &tensor) = default;
 
         //move
-        Tensor &operator=(Tensor &&tensor) = default;
+        Tensor& operator=(Tensor &&tensor) = default;
 
         //copy
-
+        //non so se funziona
         Tensor copy() {
             int n_elem = 1;
             int n_strides_[R];
@@ -112,6 +112,11 @@ namespace Tensor {
          */
         inline T getInArray(const int indexes[], const int dim) {
             return array_->at(calculatePosition(indexes, dim));
+        }
+
+        template<typename ...Ints>
+        inline T operator()(Ints... INDEXES){
+            return get(INDEXES...);
         }
 
         /**
@@ -170,7 +175,12 @@ namespace Tensor {
         }
 
         Tensor<T, R - 1> operator[](const int val) {
-            return slicing(0, val);
+            try{
+                return slicing(0, val);
+            }
+            catch (std::out_of_range e){
+                throw e;
+            }
         }
 
         /**
@@ -191,6 +201,10 @@ namespace Tensor {
             std::cout << std::endl;
         }
 
+        size_t get_dimension(size_t index) {
+            return dimensions_[index];
+        }
+
         constexpr size_t get_rank() const { return R; }
 
     private:
@@ -201,7 +215,6 @@ namespace Tensor {
         int end_ptr_;
 
         friend class Tensor<T, R + 1>;
-        template <class T1, int ...D>
 
         /**
          * calculatePosition
@@ -211,7 +224,7 @@ namespace Tensor {
          */
 
         inline int calculatePosition(const int tupla[], const int dim) {
-            if (dim <= 0) throw std::out_of_range("Out of range");
+            //if (dim <= 0) throw std::out_of_range("Out of range");
             int position = start_ptr_;
             for (int i = 0; i < dim; ++i) {
                 position += strides_[i] * tupla[i];
@@ -287,20 +300,20 @@ namespace Tensor {
         * used for sharing a Tensor
         * @param tensor
         */
-        Tensor &operator=(const Tensor &tensor) = default;
+        Tensor& operator=(const Tensor &tensor) = default;
 
         /**
          * move a tensor
          * @param tensor
          */
-        Tensor &operator=(Tensor &&tensor) = default;
+        Tensor& operator=(Tensor &&tensor) = default;
 
         /**
          *
          * @param value value to be assigned
          * @return tensor with value assigned
          */
-        Tensor &operator=(const T value) {
+        Tensor& operator=(const T value) {
             array_->at(start_ptr_) = value;
             return this;
         }
@@ -311,6 +324,7 @@ namespace Tensor {
         Tensor<T> copy() {
             Tensor<T, 0> n_tensor_;
             n_tensor_.set(this->get());
+            return n_tensor_;
         }
 
         /**
@@ -340,8 +354,7 @@ namespace Tensor {
          * used to create an shared Tensor
          */
         std::shared_ptr<std::vector<T>> array_;
-        int start_ptr_;
-        int end_ptr_;
+        int start_ptr_=0;
 
         friend class Tensor<T, 1>;
 

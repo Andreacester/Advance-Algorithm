@@ -1,16 +1,23 @@
 #include <iostream>
+
 #include "tensor.h"
 #include "proxy.h"
-#include "UTensor.h"
 
 int main() {
-    UTensor::UTensor<int> t1(2,3);
-    UTensor::UTensor<int> t2(3,2);
 
-    //tensor.set(10,1,1);
+    Tensor::Tensor<int,2> t1(2,3);
 
-    proxy_label_tensor<int, char> sp_t1(t1, {'n', 'm'});
+    int count=0;
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < 3; ++j) {
+            t1.set(count,i,j);
+            count++;
+        }
 
+    }
+    t1.printTensor("ciao");
+
+    proxy_label_tensor<int,2,char> tl(t1,{'i','j'});
 
 
 
